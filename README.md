@@ -60,6 +60,6 @@ Spring Boot를 기반으로 한 REST API를 개발하여 사용자 정보 관리
 - **Lombok**: v1.18.34
 - **Gradle**: v8.10.1
 - **RabbitMQ**: v3.9.5
-- **Java**: v21
+- **JDK**: 21
 
 
