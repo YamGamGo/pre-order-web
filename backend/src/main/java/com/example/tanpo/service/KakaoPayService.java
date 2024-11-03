@@ -145,8 +145,11 @@ public class KakaoPayService {
             // RabbitMQ를 통해 이메일 전송 메시지를 전송
             rabbitTemplate.convertAndSend("paymentQueue", createEmailMessage(reservationEntity));
 
-            // 결제 승인 응답 반환
-            return response.getBody();
+            // 리다이렉트 URL 생성
+            String successUrl = "http://localhost:3000/success?id=" + id;
+
+            // 결제 승인 응답 반환 (여기서 리다이렉트 URL을 포함)
+            return "{\"successUrl\":\"" + successUrl + "\", \"responseBody\":" + response.getBody() + "}";
         } catch (HttpClientErrorException e) {
             // HTTP 오류 처리
             throw new RuntimeException("KakaoPay 승인 과정에서 오류가 발생: " + e.getResponseBodyAsString());
@@ -179,13 +182,6 @@ public class KakaoPayService {
         return jsonResponse.get("next_redirect_pc_url").getAsString();  // 리다이렉트 URL 추출
     }
 }
-
-
-
-
-
-
-
 
 
 

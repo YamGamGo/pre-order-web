@@ -2,7 +2,7 @@ package com.example.tanpo.controller;
 
 import com.example.tanpo.entity.ProductEntity;
 import com.example.tanpo.entity.ReservationEntity;
-import com.example.tanpo.service.InformationService;
+import com.example.tanpo.service.ProductService;
 import com.example.tanpo.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +15,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final InformationService informationService;  // 오타 수정
+    private final ProductService productService;  // 오타 수정
     private final ReservationService reservationService;
 
     @GetMapping("/information")
     public ResponseEntity<ProductEntity> getExampleByIdOne() {
-        Optional<ProductEntity> example = informationService.getExampleByIdOne();
+        Optional<ProductEntity> example = productService.getExampleByIdOne();
 
         if (example.isPresent()) {
             return ResponseEntity.ok(example.get());
@@ -35,9 +35,6 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 }
-
-
-
 
 
 
