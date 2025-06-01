@@ -11,16 +11,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/product")
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService productService;  // 오타 수정
+    private final ProductService productService;
     private final ReservationService reservationService;
 
     @GetMapping("/information")
     public ResponseEntity<ProductEntity> getExampleByIdOne() {
-        Optional<ProductEntity> example = productService.getExampleByIdOne();
+        Optional<ProductEntity> example = productService.getExampleByIdOne(); // 제품 정보 조회
 
         if (example.isPresent()) {
             return ResponseEntity.ok(example.get());
@@ -31,7 +31,7 @@ public class ProductController {
 
     @PostMapping("/reservation")
     public ResponseEntity<Void> createPurchase(@RequestBody ReservationEntity reservationEntity) {
-        reservationService.savePurchase(reservationEntity);
+        reservationService.savePurchase(reservationEntity); // 예약 정보 저장
         return ResponseEntity.ok().build();
     }
 }

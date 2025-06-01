@@ -3,7 +3,6 @@ package com.example.tanpo.controller;
 import com.example.tanpo.entity.ReservationEntity;
 import com.example.tanpo.service.KakaoPayService;
 import com.example.tanpo.service.ReservationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,11 +13,13 @@ import java.util.Optional;
 @RequestMapping("/api/payment")
 public class PaymentController {
 
-    @Autowired
-    private KakaoPayService kakaoPayService;
+    private final KakaoPayService kakaoPayService;
+    private final ReservationService reservationService;
 
-    @Autowired
-    private ReservationService reservationService; // ReservationService 추가
+    public PaymentController(KakaoPayService kakaoPayService, ReservationService reservationService) {
+        this.kakaoPayService = kakaoPayService;
+        this.reservationService = reservationService;
+    }
 
     @PostMapping("/ready")
     public String ready(@RequestBody ReservationEntity reservationEntity) {
@@ -32,13 +33,12 @@ public class PaymentController {
 
     @GetMapping("/success")
     public ResponseEntity<String> success(@RequestParam String id, @RequestParam String pg_token) {
-        // 예약 결제 정보를 조회
-        Optional<ReservationEntity> purchaseOpt = reservationService.getReservationById(Long.parseLong(id)); // 수정된 부분
+        Optional<ReservationEntity> purchaseOpt = reservationService.getReservationById(Long.parseLong(id));
 
         if (purchaseOpt.isPresent()) {
             ReservationEntity reservationEntity = purchaseOpt.get();
 
-            // 결제 상태 확인
+            // TODO: PAID 문자열 상수값 따로 정의 해서 쓰기
             if ("PAID".equals(reservationEntity.getStatus())) {
                 return ResponseEntity.ok("결제성공");
             } else {
@@ -49,7 +49,7 @@ public class PaymentController {
         }
     }
 
-    @GetMapping("/reservation/{id}") // 예약 정보를 조회하는 API 추가
+    @GetMapping("/reservation/{id}")
     public ResponseEntity<ReservationEntity> getReservationById(@PathVariable Long id) {
         Optional<ReservationEntity> reservation = reservationService.getReservationById(id);
         return reservation.map(ResponseEntity::ok)

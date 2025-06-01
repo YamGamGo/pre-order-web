@@ -34,19 +34,22 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.28' // MySQL JDBC 드라이버 의존성 추가
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-cache' // 캐시 관련 의존성 추가
 
+    // Redis 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'  // Redis 의존성 추가
 
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
 def frontendDir = "$projectDir/src/main/front"
 
 sourceSets {
     main {
-        resources { srcDirs = ["$projectDir/src/main/resources"]
-        }
+        resources { srcDirs = ["$projectDir/src/main/resources"] }
     }
 }
 
@@ -81,3 +84,6 @@ sourceSets {
     from "$frontendDir/build"
     into "$projectDir/src/main/resources/static"
 }*/
+
+
+
