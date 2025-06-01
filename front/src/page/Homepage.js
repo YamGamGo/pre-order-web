@@ -106,7 +106,7 @@ const Homepage = () => {
                                         <h4 className="subheading" style={{ color: 'white' }}>소프트웨어</h4>
                                     </div>
                                     <div className="timeline-body">
-                                        <p style={{ color: 'white' }}>iOS 18로 최신 기능과 보안을 경험하세요.</p>
+                                        <p style={{ color: 'white' }}>iOS 18로 최신 기능과 보안을 경험하세요</p>
                                     </div>
                                 </div>
                             </li>
