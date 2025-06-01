@@ -38,7 +38,7 @@ public class PaymentController {
         if (purchaseOpt.isPresent()) {
             ReservationEntity reservationEntity = purchaseOpt.get();
 
-            // TODO: PAID 문자열 상수값 따로 정의 해서 쓰기
+            // TODO: PAID 문자열 상수값 따로 정의 해서 쓰기.
             if ("PAID".equals(reservationEntity.getStatus())) {
                 return ResponseEntity.ok("결제성공");
             } else {
