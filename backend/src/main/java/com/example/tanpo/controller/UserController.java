@@ -18,7 +18,7 @@ import java.util.Map;
  * ✅ 현재 로그인한 사용자 정보 조회
  * - 클라이언트는 /api/user/me 호출
  * - JwtAuthenticationFilter가 SecurityContext에 넣어둔 userId 기반으로 DB 조회
- * - 로그인 상태면 사용자 정보, 아니면 loggedIn: false 반환반
+ * - 로그인 상태면 사용자 정보, 아니면 loggedIn: false 반환
  */
 @RestController
 @RequiredArgsConstructor
