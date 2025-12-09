@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
 @RequiredArgsConstructor
+@RequestMapping("/product")
 public class ProductController {
 
     private final ProductService productService;
     private final ReservationService reservationService;
 
-    @GetMapping("/information")
+    @GetMapping()
     public ResponseEntity<ProductEntity> getExampleByIdOne() {
         Optional<ProductEntity> example = productService.getExampleByIdOne(); // 제품 정보 조회
 

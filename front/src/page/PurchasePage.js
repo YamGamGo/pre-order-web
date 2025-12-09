@@ -1,58 +1,58 @@
-"use client"
-
-import { useState, useEffect, useRef } from "react"
-import axios from "axios"
+"use client";
+import { useState, useEffect, useRef } from "react";
+import { readyPayment } from "../api/paymentService"; 
 
 function PurchasePage() {
-    const [email, setEmail] = useState("")
-    const [address, setAddress] = useState("")
-    const [number, setNumber] = useState("")
-    const [name, setName] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+    const [email, setEmail] = useState("");
+    const [address, setAddress] = useState("");
+    const [number, setNumber] = useState("");
+    const [name, setName] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const [isVisible, setIsVisible] = useState(false)
-    const sectionRef = useRef(null)
+    const [isVisible, setIsVisible] = useState(false);
+    const sectionRef = useRef(null);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
-                    setIsVisible(true)
+                    setIsVisible(true);
                 }
             },
-            { threshold: 0.1 },
-        )
+            { threshold: 0.1 }
+        );
 
         if (sectionRef.current) {
-            observer.observe(sectionRef.current)
+            observer.observe(sectionRef.current);
         }
 
-        return () => observer.disconnect()
-    }, [])
+        return () => observer.disconnect();
+    }, []);
 
+    // ✅ 결제 요청 함수 (service에서 가져옴)
     const handleBuy = async () => {
-        setIsLoading(true)
+        setIsLoading(true);
         try {
-            const response = await axios.post("http://localhost:8080/api/payment/ready", {
+            const response = await readyPayment({
                 email,
                 address,
                 number,
                 name,
                 fail_url: "http://localhost:3000/fail",
-            })
+            });
 
-            if (response.data && response.data.next_redirect_pc_url) {
-                window.location.href = response.data.next_redirect_pc_url
+            if (response && response.next_redirect_pc_url) {
+                window.location.href = response.next_redirect_pc_url;
             } else {
-                throw new Error("Redirect URL not found in response.")
+                throw new Error("Redirect URL not found in response.");
             }
         } catch (error) {
-            console.error("결제 준비 실패:", error)
-            alert("결제 준비 실패: " + (error.response?.data?.message || "서버 오류"))
+            console.error("❌ 결제 준비 실패:", error);
+            alert("결제 준비 실패: " + (error.response?.data?.message || "서버 오류"));
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -81,8 +81,8 @@ function PurchasePage() {
                     >
                         <form
                             onSubmit={(e) => {
-                                e.preventDefault()
-                                handleBuy()
+                                e.preventDefault();
+                                handleBuy();
                             }}
                             className="space-y-8"
                         >
@@ -90,10 +90,13 @@ function PurchasePage() {
                                 {/* Left Column */}
                                 <div className="space-y-6">
                                     <div
-                                        className={`transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-600 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
+                                        className={`transition-all duration-1000 delay-600 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
                                             }`}
                                     >
-                                        <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                                        <label
+                                            htmlFor="name"
+                                            className="block text-sm font-medium text-gray-300 mb-2"
+                                        >
                                             이름
                                         </label>
                                         <input
@@ -106,12 +109,14 @@ function PurchasePage() {
                                             required
                                         />
                                     </div>
-
                                     <div
-                                        className={`transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
+                                        className={`transition-all duration-1000 delay-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
                                             }`}
                                     >
-                                        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                                        <label
+                                            htmlFor="email"
+                                            className="block text-sm font-medium text-gray-300 mb-2"
+                                        >
                                             이메일
                                         </label>
                                         <input
@@ -124,12 +129,14 @@ function PurchasePage() {
                                             required
                                         />
                                     </div>
-
                                     <div
-                                        className={`transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-800 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
+                                        className={`transition-all duration-1000 delay-800 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
                                             }`}
                                     >
-                                        <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                                        <label
+                                            htmlFor="phone"
+                                            className="block text-sm font-medium text-gray-300 mb-2"
+                                        >
                                             전화번호
                                         </label>
                                         <input
@@ -146,10 +153,13 @@ function PurchasePage() {
 
                                 {/* Right Column */}
                                 <div
-                                    className={`transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-900 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
+                                    className={`transition-all duration-1000 delay-900 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
                                         }`}
                                 >
-                                    <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-2">
+                                    <label
+                                        htmlFor="address"
+                                        className="block text-sm font-medium text-gray-300 mb-2"
+                                    >
                                         배송 주소
                                     </label>
                                     <textarea
@@ -165,7 +175,7 @@ function PurchasePage() {
 
                             {/* Submit Button */}
                             <div
-                                className={`text-center pt-8 transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
+                                className={`text-center pt-8 transition-all duration-1000 delay-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
                                     }`}
                             >
                                 <button
@@ -173,71 +183,21 @@ function PurchasePage() {
                                     type="submit"
                                     disabled={isLoading}
                                 >
-                                    <span className="relative z-10 text-lg">{isLoading ? "처리 중..." : "iPhone 16 Pro 구매하기"}</span>
+                                    <span className="relative z-10 text-lg">
+                                        {isLoading ? "처리 중..." : "iPhone 16 Pro 구매하기"}
+                                    </span>
                                     <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </button>
-
-                                <p className="text-sm text-gray-400 mt-4 font-light">안전한 결제 시스템으로 보호됩니다</p>
+                                <p className="text-sm text-gray-400 mt-4 font-light">
+                                    안전한 결제 시스템으로 보호됩니다
+                                </p>
                             </div>
                         </form>
-                    </div>
-
-                    {/* Product Info */}
-                    <div
-                        className={`mt-16 text-center transition-all duration-1000 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] delay-1200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"
-                            }`}
-                    >
-                        <div className="grid md:grid-cols-3 gap-8 max-w-2xl mx-auto">
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        />
-                                    </svg>
-                                </div>
-                                <h3 className="font-medium text-white mb-1">안전한 결제</h3>
-                                <p className="text-sm text-gray-400">암호화된 보안 결제</p>
-                            </div>
-
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M5 8h14M5 8a2 2 0 110-4h1.586a1 1 0 01.707.293l1.414 1.414a1 1 0 00.707.293H19a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                                        />
-                                    </svg>
-                                </div>
-                                <h3 className="font-medium text-white mb-1">빠른 배송</h3>
-                                <p className="text-sm text-gray-400">출시일 당일 배송</p>
-                            </div>
-
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                    </svg>
-                                </div>
-                                <h3 className="font-medium text-white mb-1">품질 보증</h3>
-                                <p className="text-sm text-gray-400">1년 무상 A/S</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
         </div>
-    )
+    );
 }
 
-export default PurchasePage
+export default PurchasePage;
