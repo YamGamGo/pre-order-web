@@ -1,87 +1,144 @@
 package com.example.tanpo.controller;
 
+import com.example.tanpo.entity.KakaoUserEntity;
 import com.example.tanpo.security.JwtUtil;
+import com.example.tanpo.service.KakaoLoginService;
+import com.google.gson.JsonObject;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * AuthController
+ *
+ * - GET /auth/kakao/login
+ *   → 카카오 로그인 동의 화면으로 리다이렉트
+ *
+ * - GET /auth/kakao/login
+ *   → 카카오 인증 후 code 수신 → AccessToken 요청 → 프로필 조회
+ *   → DB upsert → JWT 발급 → 쿠키 저장 → 프론트 리다이렉트
+ *
+ * - GET /api/auth/jwt/exchange
+ *   → JWT 재발급 (쿠키 만료 시, 세션 제거했으므로 필요 없을 수 있음)
+ *
+ * - POST /api/auth/jwt/logout
+ *   → JWT 쿠키 제거
+ */
 @RestController
-@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+@RequestMapping("/auth")
 public class AuthController {
 
-    // ✅ 쿠키 이름 (발급/삭제 시 공통으로 사용)
+    private final KakaoLoginService kakaoLoginService;
+    private final JwtUtil jwtUtil;
+
+    @Value("${app.front.redirect:http://localhost:3000/}")
+    private String frontRedirectUrl;
+
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    // 이름 expiredSeconds 로 고치고 60*60
+    @Value("${app.jwt.expires.minutes:60}")
+    private long jwtExpiresMinutes;
+
+    @Value("${app.cookie.secure:false}")
+    private boolean secureCookie;
+
     private static final String COOKIE_NAME = "ACCESS_TOKEN";
 
-    private final JwtUtil jwtUtil;
-    private final long expiresMinutes;  // JWT 만료 시간 (분 단위)
-    private final boolean secureCookie; // HTTPS 환경 여부에 따라 Secure 속성 적용
-
-    public AuthController(
-            JwtUtil jwtUtil,
-            @Value("${app.jwt.expires.minutes:60}") long expiresMinutes, // 기본값 60분
-            @Value("${app.cookie.secure:false}") boolean secureCookie    // 개발 환경에서는 false
+    /**
+     * 카카오 콜백: code → AccessToken → 프로필 → DB 저장 → JWT 쿠키 발급 → 프론트 리다이렉트
+     *
+     */
+    @GetMapping("/kakao/loginpage")
+        public ResponseEntity<Void> kakaologin(
+                @RequestParam("code") String code,
+                HttpServletResponse response
     ) {
-        this.jwtUtil = jwtUtil;
-        this.expiresMinutes = expiresMinutes;
-        this.secureCookie = secureCookie;
+        // 1. 인증 코드로 AccessToken 요청
+        JsonObject tokenJson = kakaoLoginService.getAccessToken(code);
+        if (tokenJson == null || !tokenJson.has("access_token") || tokenJson.get("access_token").isJsonNull()) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+        }
+
+        // 2. 토큰 추출
+        String accessToken = tokenJson.get("access_token").getAsString();
+
+        // 3. xxxxxxxxx 토큰으로 카카오 프로필 조회
+        JsonObject profileJson = kakaoLoginService.getKakaoProfile(accessToken);
+
+
+        KakaoUserEntity savedUser = kakaoLoginService.upsertUser(tokenJson, profileJson);
+
+        //4-1 조회
+        // 4-1-a 조회 해서 있으면 로그인 그정보 그대로 반환
+        // 4-1-b 없으면 인설트 하고 그정보 반환
+
+        // 5. JWT 발급 (userId + kakaoId 기반)
+        JwtUtil jwtUtil = new JwtUtil(jwtSecret, jwtExpiresMinutes);
+        String jwt = jwtUtil.issue(savedUser.getId(), savedUser.getKakaoId());
+
+        // 6. JWT를 HttpOnly 쿠키로 저장
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, jwt)
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofMinutes(jwtExpiresMinutes))
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // 7. 프론트엔드로 리다이렉트 잘 내려왔으면 200 문제가 있으면 로그인이 되지않음 출력
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(UriComponentsBuilder.fromUriString(frontRedirectUrl).build(true).toUri());
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
     /**
-     * ✅ 교환 엔드포인트
-     * - 세션에 저장된 사용자 정보(USER_ID, KAKAO_ID)를 가져와 JWT 발급
-     * - 발급된 JWT를 HttpOnly 쿠키(ACCESS_TOKEN)로 내려줌
-     * - 이후 요청에서는 클라이언트가 이 쿠키를 자동 전송
+     * JWT 재발급 (선택적, 세션 제거했으면 필요 없을 수 있음)
      */
-    @GetMapping("/exchange")
-    public ResponseEntity<Map<String, Object>> exchange(HttpSession session,
-                                                        HttpServletResponse response) {
-        // 세션에서 유저 정보 꺼내오기
-        Long userId  = (Long) session.getAttribute("USER_ID");
-        Long kakaoId = (Long) session.getAttribute("KAKAO_ID");
+    @GetMapping("/jwt/exchange")
+    public ResponseEntity<Map<String, Object>> exchange(HttpServletResponse response) {
+        // JWT는 콜백에서 이미 발급 → 여기서는 재발급 용도
+        String dummyJwt = jwtUtil.issue(-1L, -1L);
 
-        // 세션에 사용자 정보가 없으면 401 반환
-        if (userId == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        // JWT 발급 (sub = userId, claim = kakaoId 포함)
-        String jwt = jwtUtil.issue(userId, kakaoId);
-
-        // ✅ HttpOnly 쿠키 생성
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, jwt)
-                .httpOnly(true)                          // JS에서 접근 불가 (보안)
-                .secure(secureCookie)                    // HTTPS 환경에서만 전송
-                .sameSite("Lax")                         // 크로스 사이트 요청 방지
-                .path("/")                               // 모든 경로에 적용
-                .maxAge(expiresMinutes * 60)             // 만료시간 (초 단위)
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, dummyJwt)
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofMinutes(jwtExpiresMinutes))
                 .build();
-
-        // 응답 헤더에 쿠키 추가
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        // ✅ 클라이언트용 응답 데이터 (디버깅/정보용)
         Map<String, Object> body = new HashMap<>();
         body.put("issued", true);
         body.put("tokenType", "Cookie");
         body.put("cookieName", COOKIE_NAME);
-        body.put("expiresIn", expiresMinutes * 60);
+        body.put("expiresIn", jwtExpiresMinutes * 60);
         body.put("issuedAt", Instant.now().toString());
 
         return ResponseEntity.ok(body);
     }
 
     /**
-     * ✅ 로그아웃
-     * - ACCESS_TOKEN 쿠키를 빈 값("")으로 재발급하면서 maxAge=0으로 설정
-     * - 브라우저에서 해당 쿠키가 즉시 삭제됨
+     * 로그아웃: JWT 쿠키 제거
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
@@ -90,10 +147,8 @@ public class AuthController {
                 .secure(secureCookie)
                 .sameSite("Lax")
                 .path("/")
-                .maxAge(0) // 쿠키 즉시 만료
+                .maxAge(0)
                 .build();
-
-        // 쿠키 삭제 응답 전송
         response.addHeader(HttpHeaders.SET_COOKIE, delete.toString());
         return ResponseEntity.ok().build();
     }

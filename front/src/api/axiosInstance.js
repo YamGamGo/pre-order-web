@@ -3,7 +3,7 @@ import axios from "axios";
 
 /**
  * 쿠키 기반 인증
- * - withCredentials: true → 브라우저가 쿠키(JSESSIONID, ACCESS_TOKEN)를 자동 전송
+ * - withCredentials: true → 브라우저가 쿠키(ACCESS_TOKEN)를 자동 전송
  * - Authorization 헤더는 사용하지 않음
  */
 const api = axios.create({

@@ -28,6 +28,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * 특정 경로는 아예 JWT 필터를 적용하지 않음
+     * - /api/auth/** : 로그인/로그아웃/교환 엔드포인트 ,전역 prefix 설정에 따라 중복될 수 있어 보완
+     * - /oauth/**, /login/** : 카카오 OAuth 로그인 경로
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.contains("/auth/")   // "/api/auth/" 또는 "/auth/" 모두 커버 auth 가 들어가있어서
+                || path.startsWith("/oauth/")
+                || path.startsWith("/login/");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -51,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && !token.isBlank()) {
             try {
                 DecodedJWT decoded = jwtUtil.verify(token);
-                String userId = decoded.getSubject(); // sub에 내부 PK 저장됨
+                String userId = decoded.getSubject(); //db userId 꺼냄
 
                 // 3) 인증 객체 생성 및 SecurityContext 저장
                 UsernamePasswordAuthenticationToken authentication =

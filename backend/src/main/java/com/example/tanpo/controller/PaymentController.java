@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/payment")
 public class PaymentController {
 
     @Autowired
@@ -30,10 +30,10 @@ public class PaymentController {
         return kakaoPayService.approve(pgToken, id); // 결제 승인 요청
     }
 
-    @GetMapping("/success")
+    @GetMapping()
     public ResponseEntity<String> success(@RequestParam String id, @RequestParam String pg_token) {
         // 예약 결제 정보를 조회
-        Optional<ReservationEntity> purchaseOpt = reservationService.getReservationById(Long.parseLong(id)); // 수정된 부분
+        Optional<ReservationEntity> purchaseOpt = reservationService.getReservationById(Long.parseLong(id)); // 결제 완료여부 검증
 
         if (purchaseOpt.isPresent()) {
             ReservationEntity reservationEntity = purchaseOpt.get();
@@ -49,7 +49,7 @@ public class PaymentController {
         }
     }
 
-    @GetMapping("/reservation/{id}") // 예약 정보를 조회하는 API 추가
+    @GetMapping("/reservation/{id}") // 예약 DB에서 해당 id 조회
     public ResponseEntity<ReservationEntity> getReservationById(@PathVariable Long id) {
         Optional<ReservationEntity> reservation = reservationService.getReservationById(id); // 특정 예약 정보 조회
         return reservation.map(ResponseEntity::ok)

@@ -138,6 +138,9 @@ public class KakaoPayService {
                     String.class
             );
 
+            // todo response 체크 해서 실제로 결제가 성공 되었는지 확인
+            // todo : 실패했으면 실패하면 failed 업데이트하고 사용자가 이후에는 상품 예약 과정은 스킵하고 결제만 바로 다시시도할 수 있도록 구현 필요
+
             // 결제가 완료되면 DB에서 상태를 paid로 업데이트
             reservationEntity.setStatus("PAID");
             reservationRepository.save(reservationEntity);
