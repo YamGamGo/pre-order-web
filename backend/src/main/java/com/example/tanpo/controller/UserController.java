@@ -30,7 +30,8 @@ public class UserController {
         if (authentication == null || authentication.getPrincipal() == null) {
             result.put("loggedIn", false);
             return ResponseEntity.ok(result);
-        } //로그인을 하지 않았으면 == 값이 없으니 false로 응답
+        } 
+        //로그인을 하지 않았으면 == 값이 없으니 false로 응답
 
         String userIdStr = authentication.getPrincipal().toString();//userId 를 꺼냄
         Long userId;
