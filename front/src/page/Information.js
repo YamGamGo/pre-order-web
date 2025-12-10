@@ -54,7 +54,7 @@ function Information() {
                                         48MP 울트라 와이드: 13mm, ƒ/2.2 조리개 및 120° 시야각, 하이브리드 Focus Pixels, 초고해상도 사진(48MP)
                                         12MP 5배 망원: 120mm, ƒ/2.8 조리개 및 20° 시야각, 100% Focus Pixels, 7매 렌즈, 3D 센서 시프트 광학 이미지 흔들림 보정(OIS) 및 오토포커스, 테트라프리즘 디자인
                                         5배 광학 줌인, 2배 광학 줌아웃, 10배 광학 줌 범위
-                                        최대 25배 디지털 줌
+                                        최대 25배 디지털 줌.
                                         카메라 컨트롤, Photonic Engine, Deep Fusion, 스마트 HDR 5, 야간 모드, 공간 사진, Apple ProRAW, HEIF, JPEG, DNG 지원 등`}
                         />
                     </ul>
